@@ -1,0 +1,13 @@
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+/BACLAD/data/*
+/LA/*
+/old/*
+/PDT/Screening_Export/*
+/PDT/analyses/old/*
+/PDT/analyses/plot_bilderratings_Milan/*
+/PDT/analyses/in_progress/sev_pred/dev/old/*
+/PDT/analyses/in_progress/sev_pred/old/*
+/PDT/analyses/in_progress/sev_pred/results/*
