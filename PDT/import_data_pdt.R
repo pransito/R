@@ -106,9 +106,9 @@ base_bgg          = paste("C:/Users/",user,"Google Drive/Promotion/VPPG/VPPG_Exc
 base_lib          = paste("C:/Users/",user,"Google Drive/",sep="")
 
 # other working locations
-base              = "E:/Google Drive/Promotion/VPPG/VPPG_Exchange/"
-base_lib          = "E:/Google Drive/"
-base_dat_GD       = 'E:/Google Drive/Promotion/VPPG/VPPG_Exchange/Experimente/PDT/Daten/'
+#base              = "E:/Google Drive/Promotion/VPPG/VPPG_Exchange/"
+#base_lib          = "E:/Google Drive/"
+#base_dat_GD       = 'E:/Google Drive/Promotion/VPPG/VPPG_Exchange/Experimente/PDT/Daten/'
 
 
 # some other absolute paths to be set with brute force
