@@ -852,15 +852,6 @@ if (do_report_no_added_feat | do_report_with_added_feat) {
   #cur_mod_sel_nooCV_freq$modnames = factor(cur_mod_sel_nooCV_freq$modnames, levels = cur_mod_sel_nooCV_freq$modnames)
   cur_mod_sel_nooCV_freq$Freq     = as.numeric(cur_mod_sel_nooCV_freq$Freq)
   
-  # throwing out the non-linear one
-  if (!isempty(grep('lanle',cur_mod_sel_nooCV_freq$modnames))) {
-    warning('I am throwing out the non-linear mods in report.')
-    cur_mod_sel_nooCV_freq = cur_mod_sel_nooCV_freq[-grep('lanle',cur_mod_sel_nooCV_freq$modnames),]
-  }
-  
-  # # recoding
-  #cur_mod_sel_nooCV_freq$modnames = agk.recode.c(cur_mod_sel_nooCV_freq$modnames, c('ac','acc'),c('a','ac'))
-  
   # fixing the order by complexity, which we prepped above
   cur_mod_sel_nooCV_freq$modnames = factor(cur_mod_sel_nooCV_freq$modnames, levels = cur_mod_sel_nooCV_freq$modnames)
   
