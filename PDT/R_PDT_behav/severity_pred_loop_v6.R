@@ -16,6 +16,61 @@ root_wd = 'C:/Users/genaucka/Google Drive/Library/R/PDT/R_PDT_behav'
 setwd(root_wd)
 load('.RData')
 
+# LIBRARIES ===================================================================
+# libraries
+# documentation
+# http://lme4.r-forge.r-project.org/
+# http://lme4.r-forge.r-project.org/lMMwR/lrgprt.pdf
+# http://www.biomedcentral.com/1471-2288/11/77
+agk.load.ifnot.install("psych")
+agk.load.ifnot.install("pracma")
+agk.load.ifnot.install("pls")
+agk.load.ifnot.install("Hmisc")
+agk.load.ifnot.install("lme4")
+agk.load.ifnot.install("reshape2")
+agk.load.ifnot.install("R.matlab")
+agk.load.ifnot.install("gtools")
+agk.load.ifnot.install("plyr")
+agk.load.ifnot.install("ggplot2")
+agk.load.ifnot.install("plot3D")
+agk.load.ifnot.install("rgl")
+agk.load.ifnot.install("gridExtra")
+agk.load.ifnot.install("kernlab")
+agk.load.ifnot.install("boot")
+agk.load.ifnot.install("simpleboot")
+agk.load.ifnot.install("fastICA")
+agk.load.ifnot.install("corrplot")
+agk.load.ifnot.install("glmnet")
+# https://cran.r-project.org/src/contrib/Archive/glmnetUtils/
+#tmp_path = paste0('C:/Users/',user,'Downloads/glmnetUtils-master.zip')
+#install.packages(tmp_path, repos = NULL, type="source")
+#glmnetUtils now on CRAN
+agk.load.ifnot.install("glmnetUtils")
+agk.load.ifnot.install("foreign")
+agk.load.ifnot.install("parallel")
+agk.load.ifnot.install("foreach")
+agk.load.ifnot.install("doSNOW")
+agk.load.ifnot.install("simpleboot")
+agk.load.ifnot.install("GPArotation")
+agk.load.ifnot.install("nnet")
+agk.load.ifnot.install("msm")
+agk.load.ifnot.install("foreign")
+agk.load.ifnot.install("caret")
+agk.load.ifnot.install('readxl')
+agk.load.ifnot.install("rJava")
+agk.load.ifnot.install("xlsx")
+agk.load.ifnot.install('e1071')
+agk.load.ifnot.install('ptw')
+agk.load.ifnot.install('lmPerm')
+agk.load.ifnot.install('pROC')
+agk.load.ifnot.install('cvTools')
+agk.load.ifnot.install('matlib')
+agk.load.ifnot.install('robust')
+agk.load.ifnot.install('e1071')
+
+library(compiler)
+
+
 # WHAT TO RUN =================================================================
 # just the behavioral parameter sets
 outer_cv_noaddfeat_noperm = 1 # only behavior
