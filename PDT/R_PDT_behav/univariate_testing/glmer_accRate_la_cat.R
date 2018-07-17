@@ -8,6 +8,56 @@
 # permutation test to get p-value for parameters
 # TODO: let permutation function also return an accurarcy or aic or so measure
 
+# PREPARATION FOR FOREIGN RUN =================================================
+rm(list=ls())
+root_wd = 'C:/Users/genaucka/Google Drive/Library/R/PDT/R_PDT_behav'
+setwd(root_wd)
+load('.RData')
+
+# LIBRARIES ===================================================================
+agk.load.ifnot.install("psych")
+agk.load.ifnot.install("pracma")
+agk.load.ifnot.install("pls")
+agk.load.ifnot.install("Hmisc")
+agk.load.ifnot.install("lme4")
+agk.load.ifnot.install("reshape2")
+agk.load.ifnot.install("R.matlab")
+agk.load.ifnot.install("gtools")
+agk.load.ifnot.install("plyr")
+agk.load.ifnot.install("ggplot2")
+agk.load.ifnot.install("plot3D")
+agk.load.ifnot.install("rgl")
+agk.load.ifnot.install("gridExtra")
+agk.load.ifnot.install("kernlab")
+agk.load.ifnot.install("boot")
+agk.load.ifnot.install("simpleboot")
+agk.load.ifnot.install("fastICA")
+agk.load.ifnot.install("corrplot")
+agk.load.ifnot.install("glmnet")
+agk.load.ifnot.install("glmnetUtils")
+agk.load.ifnot.install("foreign")
+agk.load.ifnot.install("parallel")
+agk.load.ifnot.install("foreach")
+agk.load.ifnot.install("doSNOW")
+agk.load.ifnot.install("simpleboot")
+agk.load.ifnot.install("GPArotation")
+agk.load.ifnot.install("nnet")
+agk.load.ifnot.install("msm")
+agk.load.ifnot.install("foreign")
+agk.load.ifnot.install("caret")
+agk.load.ifnot.install('readxl')
+agk.load.ifnot.install("rJava")
+agk.load.ifnot.install("xlsx")
+agk.load.ifnot.install('e1071')
+agk.load.ifnot.install('ptw')
+agk.load.ifnot.install('lmPerm')
+agk.load.ifnot.install('pROC')
+agk.load.ifnot.install('cvTools')
+agk.load.ifnot.install('matlib')
+agk.load.ifnot.install('robust')
+agk.load.ifnot.install('e1071')
+agk.load.ifnot.install('compiler')
+
 ## SETTINGS ===================================================================
 # control object for the glmer fitting
 cur_control = glmerControl(check.conv.grad="ignore",
@@ -17,8 +67,7 @@ cur_control = glmerControl(check.conv.grad="ignore",
 # do the boot or just load prebootstrapped results?
 doBoot    = 0
 # wd for saving the results of the bootstraps
-#bootResWd = "E:/Google Drive/Library/R/PDT/analyses/in_progress/sev_pred/results/effects_under_0_la"
-bootResWd = "C:/Users/genaucka/Google Drive/Library/R/PDT/analyses/in_progress/sev_pred/results/effects_under_0_la"
+bootResWd = paste(root_wd,'effects_under_0_la',sep = '/')
 # how many bootstraps?
 cur_num   = 500
 # how many cpus to use?
@@ -76,9 +125,7 @@ if (doFitGlmer) {
 cur_dp         = modla_cg@frame
 cur_dp$pred_00 = as.numeric(as.numeric(predict(modla_00) >= 0) == cur_dp$accept_reject)
 cur_dp$pred_cg = as.numeric(as.numeric(predict(modla_cg) >= 0) == cur_dp$accept_reject)
-
-dens_df = aggregate(cbind(pred_00,pred_cg) ~ subject + HCPG, data = cur_dp, FUN = mean)
-
+dens_df        = aggregate(cbind(pred_00,pred_cg) ~ subject + HCPG, data = cur_dp, FUN = mean)
 
 ## acceptance rate and under different cue conditions #########################
 # acceptance rate graph, descriptives (CIs over subjects; better SD?)
@@ -589,8 +636,6 @@ for (nn in 1:length(names(obs_fixef))) {
 disp(paste('Permutation test group for:','mse'))
 mse_a = mean((1/(1+exp(-predict(modla_cgi)))-as.numeric(as.character(modla_cgi@frame$accept_reject)))^2)
 print(agk.density_p(mse,mse_a,type = 'smaller'))
-
-
 
 # just plot the the la per category and group lamod_cgi ======================
 cfe    = fixef(modla_cgi)
