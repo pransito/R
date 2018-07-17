@@ -1,10 +1,19 @@
 # PREAMBLE ====================================================================
 # Version 6.0
 # script to run sev pred CV in a loop to see how stable results are
-# and through permutation get a null-hypothesis distribution
+# i.e. severity prediction cross validated; in a loop because
+# we work with 10-fold or 5-fold cross-validation and this can be run
+# many different times in different ways; needs to be sampled, like a bootstrap
+
+# through running a control model getting a null-distribution
 # also you can run the nooCV version to get the model that is most likely 
-# estimated by the given data
-# run import_data and select_study before
+# estimated by the given data; nooCV: no outer cross validation
+
+# WHAT TO RUN helps to select what the script should do; already set so it 
+# is like it is in paper
+
+# tip: set runs to a smaller number than 1010 if you do not want to wait hours
+# for a result (try 10 for starters)
 
 # author: Alexander Genauck
 # email:  alexander.genauck@charite.de
@@ -73,13 +82,13 @@ noout_cv_wiaddfeat_noperm = 0 # adding physio
 outer_cv_addfeaton_noperm = 1 # only physio
 noout_cv_addfeaton_noperm = 0 # only physio
 
-outer_cv_c_model_noperm   = 0 # control model/null-model for classification
+outer_cv_c_model_noperm   = 1 # control model/null-model for classification
 
 # what to report
-do_report                 = 0
-do_report_no_added_feat   = 0
+do_report                 = 1
+do_report_no_added_feat   = 1
 do_report_with_added_feat = 0
-do_report_feat_only       = 0
+do_report_feat_only       = 1
 
 # PARAMETERS TO SET: General ==================================================
 # number of runs to get the CV results distribution, 1000 recommended
