@@ -1,33 +1,18 @@
 ## PREAMBLE ===================================================================
 # Version 6.0
-# trying to predict severity of the whole group (HC+PG)
+# trying to predict group (HC vs. PG)
 # using all LA models with or without cat modulation
-# in this Version: selection of which model to extract exp params is
+# selection of which model to extract exp params is
 # part of training (inner CV will be used)
 # this script initializes the data; gets the behav model parameters
 
 # initialization script to set parameters and get data
-# before, please run: import_data_pdt.R, select_study.R
-# this script will be called by severity_pred_loop_v2.R
-
-# here focus on lmlist; glmer too calculation intense
-# and ecologically invalid; cannot do glmer on single subject
-# ML: only glmnet
-# dev: new in 6.0: formula is now always "Y ~ ."
-# no more "pred_"
-
-# CV
-# is done on for model selection, feature selection
-
-# one model full and then CV
-# no more full and baseline
-# every model is a model in its own right
-# this is prep for feature selection + ML + prediction(CV)
+# here using on lmlist to get the single-subject exp paramters using different
+# single-subject modeling strategies
 
 # author: Alexander Genauck
 # email:  alexander.genauck@charite.de
-# date:   09.06.2018
-warning('REDO the non-linear bit after review; https://de.wikipedia.org/wiki/Verlustaversion')
+# date:   17.07.2018
 
 # PARAMETERS TO SET: General ==================================================
 # in glmnet final model which alphas to be tested?

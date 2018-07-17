@@ -1,9 +1,10 @@
 # PREAMBLE ====================================================================
 # Version 6.0
-# script to run sev pred CV in a loop to see how stable results are
-# i.e. severity prediction cross validated; in a loop because
+# script to run group prediction with CV in a loop to see how stable results are
+# i.e. group prediction cross validated; in a loop because
 # we work with 10-fold or 5-fold cross-validation and this can be run
 # many different times in different ways; needs to be sampled, like a bootstrap
+# note: prediction here used interchangeably with "classification"
 
 # through running a control model getting a null-distribution
 # also you can run the nooCV version to get the model that is most likely 
@@ -36,13 +37,10 @@ agk.load.ifnot.install("R.matlab")
 agk.load.ifnot.install("gtools")
 agk.load.ifnot.install("plyr")
 agk.load.ifnot.install("ggplot2")
-agk.load.ifnot.install("plot3D")
 agk.load.ifnot.install("rgl")
 agk.load.ifnot.install("gridExtra")
-agk.load.ifnot.install("kernlab")
 agk.load.ifnot.install("boot")
 agk.load.ifnot.install("simpleboot")
-agk.load.ifnot.install("fastICA")
 agk.load.ifnot.install("corrplot")
 agk.load.ifnot.install("glmnet")
 agk.load.ifnot.install("glmnetUtils")
@@ -55,7 +53,6 @@ agk.load.ifnot.install("GPArotation")
 agk.load.ifnot.install("nnet")
 agk.load.ifnot.install("msm")
 agk.load.ifnot.install("foreign")
-agk.load.ifnot.install("caret")
 agk.load.ifnot.install('readxl')
 agk.load.ifnot.install("rJava")
 agk.load.ifnot.install("xlsx")
@@ -192,7 +189,7 @@ add_cr_pp_ma         = 1
 # master add cue reactivity predictors to full model: ratings
 # can be set to 0, if feature selection and adding should not be done on this
 add_cr_ra_ma         = 0
-# reduce the fMRI features as set in the severity_pred_init_v6 script
+# reduce the fMRI features as set in the group_pred_init_v6 script
 reduce_fMRI_data     = 1
 # plot and stats should be turned of for phys and rating params
 plot_and_stats       = 0
@@ -219,8 +216,8 @@ do_feat_sel = des_feat_sel
 add_cr_pp   = add_cr_pp_ma
 add_cr_ra   = add_cr_ra_ma
 
-# run the init of (the CV of) severity pred
-source('severity_pred_init_v6.R')
+# run the init of (the CV of) group pred
+source('group_pred_init_v6.R')
 
 # get the original matching subjects group
 sub_grp_matching = featmod_coefs_bcp[[1]][c('HCPG')]
@@ -259,8 +256,8 @@ if (outer_cv_noaddfeat_noperm | outer_cv_wiaddfeat_noperm) {
   }
   # run the models (for param extraction in exp)
   est_models  = 1
-  # run the init (the CV of) severity pred
-  source('severity_pred_init_v6.R')
+  # run the init (the CV of) group pred
+  source('group_pred_init_v6.R')
   # no permutation
   do_permut   = F
   CV_res_list = list()
@@ -270,7 +267,7 @@ if (outer_cv_noaddfeat_noperm | outer_cv_wiaddfeat_noperm) {
   list_winning_model = list()
   cur_mod_sel_vec    = c()
   for(hh in 1:runs) {
-    source('severity_pred_6_wioCV.R')
+    source('group_pred_6_wioCV.R')
     CV_res_list[[hh]]        = CV_res
     setWinProgressBar(pb,hh, title=paste(cur_title, round(hh/runs*100),
                                          "% done"))
@@ -307,8 +304,8 @@ if (outer_cv_noaddfeat_wiperm) {
   add_cr_ra   = 0
   # run the models (for param extraction in exp)
   est_models  = 1
-  # run the init (the CV of) severity pred
-  source('severity_pred_init_v6.R')
+  # run the init (the CV of) group pred
+  source('group_pred_init_v6.R')
   # with permutation
   do_permut    = T
   CVp_res_list = list()
@@ -316,7 +313,7 @@ if (outer_cv_noaddfeat_wiperm) {
   pb = winProgressBar(title = cur_title, min = 0,
                       max = runs, width = box_width)
   for(hh in 1:runs) {
-    source('severity_pred_5_wioCV.R')
+    source('group_pred_6_wioCV.R')
     CVp_res_list[[hh]]        = CV_res
     setWinProgressBar(pb,hh, title=paste(cur_title,round(hh/runs*100),
                                          "% done"))
@@ -354,8 +351,8 @@ if (noout_cv_noaddfeat_noperm | noout_cv_wiaddfeat_noperm) {
  
   # run the models (for param extraction in exp)
   est_models  = 1
-  # run the init (the CV of) severity pred
-  source('severity_pred_init_v6.R')
+  # run the init (the CV of) group pred
+  source('group_pred_init_v6.R')
   if (PDT_behav_apply_on_MRI) {
     fm_MRT = fm
   }
@@ -369,7 +366,7 @@ if (noout_cv_noaddfeat_noperm | noout_cv_wiaddfeat_noperm) {
   cur_mod_sel_nooCV         = c()
   
   for(hh in 1:runs) {
-    source('severity_pred_6_wioCV.R')
+    source('group_pred_6_wioCV.R')
     if (PDT_behav_apply_on_MRI) {
       stop('PDT_behav_apply_on_MRI: again have to implement in wioCV script; also should not be used anymore; we do consensus prediction.')
       CVnoo_res_list_PP_on_MRT[[hh]] = CV_res
@@ -435,8 +432,8 @@ if (outer_cv_addfeaton_noperm) {
   est_models       = 1
   # add RT (only for behav!)
   add_rt           = 0
-  # run the init of (the CV of) severity pred
-  source('severity_pred_init_v6.R')
+  # run the init of (the CV of) group pred
+  source('group_pred_init_v6.R')
   # only physio
   use_behav_params = F
   # do no permutation
@@ -446,7 +443,7 @@ if (outer_cv_addfeaton_noperm) {
   pb             = winProgressBar(title = cur_title, min = 0,
                                   max = runs, width = box_width)
   for(hh in 1:runs) {
-    source('severity_pred_5_wioCV.R')
+    source('group_pred_6_wioCV.R')
     CV_res_list_op[[hh]]        = CV_res
     setWinProgressBar(pb,hh, title=paste(cur_title, round(hh/runs*100),
                                          "% done"))
@@ -478,8 +475,8 @@ if (outer_cv_addfeaton_wiperm) {
   est_models  = 1
   # add RT (only for behav!)
   add_rt           = 0
-  # run the init (the CV of) severity pred
-  source('severity_pred_init_v6.R')
+  # run the init (the CV of) group pred
+  source('group_pred_init_v6.R')
   # only physio
   use_behav_params = F
   # do no permutation
@@ -489,7 +486,7 @@ if (outer_cv_addfeaton_wiperm) {
   pb = winProgressBar(title = cur_title, min = 0,
                       max = runs, width = box_width)
   for(hh in 1:runs) {
-    source('severity_pred_6_wioCV.R')
+    source('group_pred_6_wioCV.R')
     CVp_res_list_op[[hh]] = CV_res
     setWinProgressBar(pb,hh, title=paste(cur_title,round(hh/runs*100),
                                          "% done"))
@@ -521,8 +518,8 @@ if (noout_cv_addfeaton_noperm) {
   est_models       = 1
   # add RT (only for behav!)
   add_rt           = 0
-  # run the init (the CV of) severity pred
-  source('severity_pred_init_v6.R')
+  # run the init (the CV of) group pred
+  source('group_pred_init_v6.R')
   # only physio
   use_behav_params = F
   CVnoo_res_list_op              = list()
@@ -533,7 +530,7 @@ if (noout_cv_addfeaton_noperm) {
   pb = winProgressBar(title = cur_title, min = 0,
                       max = runs, width = box_width)
   for(hh in 1:runs) {
-    source('severity_pred_4_nooCV.R')
+    source('group_pred_6_nooCV.R')
     CVnoo_res_list_op[[hh]]  = CV_res
     
     # getting the complete final model's coefs
@@ -579,8 +576,8 @@ if (outer_cv_c_model_noperm) {
   add_cr_ra   = 0
   # run the models (for param extraction in exp)
   est_models  = 1
-  # run the init (the CV of) severity pred
-  source('severity_pred_init_v6.R')
+  # run the init (the CV of) group pred
+  source('group_pred_init_v6.R')
   # no permutation
   do_permut   = F
   # CV style
@@ -593,7 +590,7 @@ if (outer_cv_c_model_noperm) {
                       max = runs, width = 300)
   list_winning_model = list()
   for(hh in 1:runs) {
-    source('severity_pred_6_wioCV.R')
+    source('group_pred_6_wioCV.R')
     CVcm_res_list[[hh]]        = CV_res
     setWinProgressBar(pb,hh, title=paste(cur_title, round(hh/runs*100),
                                          "% done"))
@@ -935,8 +932,8 @@ if (do_report_feat_only) {
   add_cr_ra   = add_cr_ra_ma
   # run the models (for param extraction in exp)
   est_models  = 1
-  # run the init (the CV of) severity pred
-  source('severity_pred_init_v6.R')
+  # run the init (the CV of) group pred
+  source('group_pred_init_v6.R')
   # assign the right CVp list
   CV_res_list = CV_res_list_op
   

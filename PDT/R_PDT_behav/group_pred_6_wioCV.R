@@ -3,7 +3,7 @@
 # k-fold CV of the whole procedure
 # script which checks for CV score of the whole procedure
 # with or without permutation
-# needs before: import_data_pdt.R; select_study.R; severity_pred_init.R;
+# needs before: import_data_pdt.R; select_study.R; group_pred_init.R;
 
 # PREPARATION =================================================================
 # get the study selected dat_match which contains demographic info
@@ -868,7 +868,7 @@ for (kk in 1:length(flds)) {
       cur_response    = as.numeric(cur_predic)
     }
     
-    # predicting the test data's severity
+    # predicting the test data's group
     cur_predic_orig = cur_predic
     cur_predic      = ifelse(cur_predic > 0,"PG","HC")
     predictions = c(predictions,cur_predic)
