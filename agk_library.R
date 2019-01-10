@@ -73,7 +73,6 @@ agk.load.ifnot.install('pROC')
 agk.load.ifnot.install('cvTools')
 agk.load.ifnot.install('matlib')
 agk.load.ifnot.install('robust')
-agk.load.ifnot.install('e1071')
 #agk.load.ifnot.install('sampling')
 
 library(compiler)
@@ -94,10 +93,51 @@ detach.package.rf <- function(pkg, character.only = FALSE)
   }
 }
 
+agk.assign.envtoenv = function(e1,e2) {
+  # assign all variables from one environment to another
+  for(n in ls(e1, all.names=TRUE)) assign(n, get(n, e1), e2)
+}
+
+
 agk.clean.intercept.name = function(df) {
   # Function to clean the Intercept name
   names(df)[grep('(Intercept)',names(df))] = 'Intercept'
   return(df)
+}
+
+agk.merge.dfs = function(df_list,kill_var,dat_match) {
+  # function to take list of data frames,
+  # whose variables should be cbind'd one after the other
+  # kill_var is a variable which repeats across dfs and should only be used once
+  # and then gets discarded
+  
+  # annoying preprocessing necessary because of nested df's
+  tmp              = df_list[[1]]
+  tmp[kill_var]    = NULL
+  cn_nms           = names(tmp)
+  cr_rnms          = row.names(tmp)
+  if (length(tmp) == 1) {
+    tmp = data.frame(tmp[[1]])
+    names(tmp) = cn_nms
+    row.names(tmp) = cr_rnms
+  }
+  tmp           = agk.clean.intercept.name(tmp)
+  names(tmp)    = paste0(names(df_list)[1],'_',names(tmp))
+
+  for (tt in 2:length(df_list)) {
+    # extracting the survived features
+    # cur featmod coefs
+    cur_tmp           = df_list[[tt]]
+    cur_tmp[kill_var] = NULL
+    cur_tmp           = agk.clean.intercept.name(cur_tmp)
+    names(cur_tmp)    = paste0(names(df_list)[tt],'_',names(cur_tmp))
+    tmp               = cbind(tmp,cur_tmp)
+  }
+  
+  # bring brack the kill_var
+  tmp[kill_var] = as.factor(agk.recode(row.names(tmp),dat_match$VPPG,as.character(dat_match$HCPG)))
+  
+  return(tmp)
 }
 
 agk.merge.df.by.row.names = function(df1,df2,x1=NULL,x2=NULL) {
@@ -269,7 +309,9 @@ agk.density_p = function(x,value,type = 'smaller') {
   # so useful if you wanna test difference measure "x greater y"
   # two.sided:
   # is the one-sided test, that we see abs(value) or smaller
+  # given density(abs(x))
   # so useful if you wanna test difference measure "x different y"
+  # TODO: put back the websource for this reasoning
   if(any(is.na(x))) {return(NA)}
   if (type == 'smaller' | type == 'greater') {
     dens_diffs   = density(x,n = 2^15)
@@ -701,6 +743,36 @@ agk.boot.p.mermod = function(mermod,mermod0=NULL,num_cpus,num,fun_extract,cur_co
 # ITS USE IS NOT FLEXIBLY and THOROUGHLY ENOUGH
 f.summary            = function(x) mean(x, na.rm=TRUE)
 
+agk.clean.vars = function(cr_agg_pp,dat_match,vars_to_cov,clean_inf_crit) {
+  
+  # MRT: edu_years
+  # POSTPILOT_HCPG: smoking_ftdt
+  
+  cr_agg_pp_uncleaned = cr_agg_pp
+  disp('Cleaning predictor variables from influence of unmatched covariates of no interest...')
+  # align subjects
+  cur_rn               = row.names(cr_agg_pp)[row.names(cr_agg_pp) %in% dat_match$VPPG]
+  cr_agg_pp            = subset(cr_agg_pp, row.names(cr_agg_pp) %in% dat_match$VPPG)
+  row.names(cr_agg_pp) = cur_rn
+  # test if subjects aligned
+  stopifnot(length(dat_match$VPPG) == length(row.names(cr_agg_pp)))
+  stopifnot(all(dat_match$VPPG == row.names(cr_agg_pp)))
+  preds = dat_match[vars_to_cov]
+  cr_agg_pp_cleaned    = lapply(cr_agg_pp,FUN=agk.regress.out.c,rob=F,inf_crit=clean_inf_crit,preds=preds,ro_info = 1,des_degree = 1)
+  cur_fun_df           = function(x) {return(x$'res')}
+  cur_fun_ro           = function(x) {return(x$ro)}
+  cr_agg_pp_cleaned_df = as.data.frame(lapply(cr_agg_pp_cleaned,FUN=cur_fun_df))
+  cr_agg_pp_cleaned_ro = unlist(lapply(cr_agg_pp_cleaned,FUN=cur_fun_ro))
+  message('I cleaned so many variables of the cr_agg_pp data frame (0 not cleaned, 1 cleaned)')
+  print(table(cr_agg_pp_cleaned_ro))
+  cr_agg_pp_cleaned            = cr_agg_pp_cleaned_df
+  cr_agg_pp                    = cr_agg_pp_cleaned
+  row.names(cr_agg_pp)         = cur_rn
+  row.names(cr_agg_pp_cleaned) = cur_rn
+  disp('Done.')
+  return(list(cr_agg_pp_cleaned = cr_agg_pp_cleaned,cr_agg_pp = cr_agg_pp))
+}
+
 # ROC curves
 agk.plot.mean.roc = function(rocl,des_ci = 'quant',add = F) {
   # function that takes a list of ROCs
@@ -768,6 +840,61 @@ agk.plot.mean.roc = function(rocl,des_ci = 'quant',add = F) {
   }
   
   abline(a=1,b=-1,lty=4,lwd=2)
+}
+
+agk.mri.shorter.and.grouped.names = function(ci_res) {
+  # makes variables names short and groups them
+  
+  # names simpler:
+  ci_res$coef = gsub('SS__grp01_noCov_','',ci_res$coef)
+  ci_res$coef = gsub('SS__','',ci_res$coef)
+  ci_res$coef = gsub('PicGamOnxAcc','PIT',ci_res$coef)
+  ci_res$coef = gsub('PicGamOnxacc','PIT',ci_res$coef)
+  ci_res$coef = gsub('ROI_LR_','',ci_res$coef)
+  ci_res$coef = gsub('_LR','',ci_res$coef)
+  ci_res$coef = gsub('noCov_PPI_','',ci_res$coef)
+  ci_res$coef = gsub('X','x',ci_res$coef)
+  
+  # giving a grouped overview
+  grouping                                                  = rep(NA,length(ci_res$coef))
+  grouping[grep('^Pic',ci_res$coef)]                        = 'cue_reactivity'
+  grouping[grep('^PPI_Amy.*OrG',ci_res$coef)]               = 'Amy_to_OFC'
+  grouping[grep('^PPI_Amy.*StrAsCaud',ci_res$coef)]         = 'Amy_to_Striatum'
+  grouping[grep('^PPI_Amy.*StrAsPut',ci_res$coef)]          = 'Amy_to_Striatum'
+  grouping[grep('^PPI_Amy.*Acc',ci_res$coef)]               = 'Amy_to_Striatum'
+  grouping[grep('^PIT',ci_res$coef)]                        = 'PIT'
+  grouping[grep('^PPI_Acc_',ci_res$coef)]                   = 'Accumbens_to_Str_Amy'
+  ci_res$coef[ci_res$coef == 'x.grp_classifier_intercept.'] = 'Classifier_Icpt'
+  grouping[grep('Classifier_Icpt',ci_res$coef)]             = 'cue_reactivity'
+  grouping[grep('years of education',ci_res$coef)]          = 'Covariate_and_Intercept'
+  grouping[grep('edu_years',ci_res$coef)]                   = 'Covariate_and_Intercept'
+  grouping[grep('intercept of classifier',ci_res$coef)]     = 'Covariate_and_Intercept'
+  
+  ci_res$grouping = factor(grouping,levels = c('cue_reactivity','PIT','Amy_to_OFC','Amy_to_Striatum','Accumbens_to_Str_Amy','Covariate_and_Intercept'),
+                           labels = c('cue reactivity','PIT','PPI PIT seed Amygdala to OFC','PPI PIT seed Amygdala to Accumbens','PPI PIT seed Accumbens to Amygdala','Covariate and Intercept'))
+  
+  # shorter names even
+  ci_res$coef = gsub('Accumbens','Acc',ci_res$coef)
+  ci_res$coef = gsub('Amygdala','Amy',ci_res$coef)
+  ci_res$coef = gsub('PPI','c',ci_res$coef)
+  ci_res$coef = gsub('PITx','PIT',ci_res$coef)
+  ci_res$coef = gsub('c_','c',ci_res$coef)
+  ci_res$coef = gsub('StrAso','StrAs',ci_res$coef)
+  ci_res$coef = gsub('StrAs','',ci_res$coef)
+  ci_res$coef = gsub('ROI_','',ci_res$coef)
+  ci_res$coef = gsub('Picgam_','gam_',ci_res$coef)
+  ci_res$coef = gsub('Picneg_','neg_',ci_res$coef)
+  ci_res$coef = gsub('Picpos_','pos_',ci_res$coef)
+  ci_res$coef = gsub('^PITpos_','pos_',ci_res$coef)
+  ci_res$coef = gsub('^PITneg_','neg_',ci_res$coef)
+  ci_res$coef = gsub('^PITgam_','gam_',ci_res$coef)
+  ci_res$coef = gsub('^cAmy','Amy',ci_res$coef)
+  ci_res$coef = gsub('^cAcc','Acc',ci_res$coef)
+  ci_res$coef = gsub('^AccPITgam','Acc_PITgam',ci_res$coef)
+  ci_res$coef = gsub('^AccPITneg','Acc_PITneg',ci_res$coef)
+  ci_res$coef = gsub('^AccPITpos','Acc_PITpos',ci_res$coef)
+  
+  return(ci_res)
 }
 
 ttest.group          = function(x,cur_group,cur_alt = 'two.sided') {
@@ -1906,18 +2033,21 @@ agk.polym.df = function(preds,degree) {
   return(res)
 }
 
-agk.regress.out = function(x,preds,rob,inf_crit = 'AIC',ro_info) {
+agk.regress.out = function(x,preds,rob,inf_crit = 'AIC',ro_info,des_degree) {
   # function to regress out of x what is useful using
   # pred as predictors up to polynomial expansion 
   # defined in des_poly
   # returns the residuals
+  if (rob == T) {
+    stop('Robust stepwise is not currently working. Only allows stepwise backward.')
+  }
   
   # pretest
   if (!is.numeric(x)) {
     res = x
     ro  = NA
   } else {
-    preds        = agk.polym.df(preds,degree=2)
+    preds        = agk.polym.df(preds,degree=des_degree)
     preds        = as.data.frame(preds)
     names(preds) = paste0('v_',names(preds))
     names_pred   = names(preds)
@@ -2806,25 +2936,26 @@ agk.recode <- function(x,y,z) {
   # a recode function
   # function to recode x, given a source vector y
   # and a translated vector z
-  x = as.character(x)
-  y = as.character(y)
-  z = as.character(z)
+  x     = as.character(x)
+  y     = as.character(y)
+  z     = as.character(z)
+  x_rec = x
   for (ii in 1:length(x)) {
     done <- 0
     for (jj in 1:length(y)) {
       # NA in x will be NA
       if(is.na(x[ii])) {
-        x[ii] <- NA
+        x_rec[ii] <- NA
         break
       }
       if (x[ii] == y[jj]) {
-        x[ii] <- z[jj]
+        x_rec[ii] <- z[jj]
         done <- 1
       }
       if (done == 1) {break}
     }
   }
-  return(x)
+  return(x_rec)
 }
 agk.recode.c = cmpfun(agk.recode)
 
