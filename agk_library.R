@@ -635,12 +635,18 @@ lmList_orth = function(formula, data,family,na.action,pool) {
   
 }
 
-agk.boot.cfint.mermod = function(mermod,num_cpus,num,fun_extract, cur_control,type = 'parametric') {
+agk.boot.cfint.mermod = function(mermod,num_cpus,num,fun_extract, cur_control,cur_type = 'parametric',
+                                 nonp_unit = 'single_observation', nonp_batch_names = NULL,
+                                 agk.boot.cfint.mermod.subfun = agk.boot.cfint.mermod.subfun) {
   # doing a parametric bootstrap of a lmer mod
   # interesting cause bootmer does not seem to accept control arguments
   # function simply bootstraps parametrically the fixef extracts according to
   # fun_extract
   # it returns the naked bootstraps which then can be used to make the cfints
+  # nonp_unit unit is single obs or some batch? ('batch')
+  # nonp_batch_names is the unit for sampling in the bootstrap; normally it is the single observation (one line)
+  # but you can do the subject for example; or give a list (length 2) of strings which are variables in df
+  # then df will be split according to first... and boot according to last and then be put together
   
   # get the function call
   cur_form                                = mermod@call
@@ -654,32 +660,69 @@ agk.boot.cfint.mermod = function(mermod,num_cpus,num,fun_extract, cur_control,ty
   }
   
   mod_call = new_form
-  
-    # sub function
-    agk.boot.cfint.mermod.subfun = function(mermod,mod_call,fun_extract,cur_control,type) {
-      cur_d = mermod@frame
-      if (type == 'parametric') {
-        # simulate under alternative hyothesis
-        cur_d$accept_reject <- (simulate(mermod))[[1]]
-      } else if (type == 'non-parametric') {
-        # resample the data with relacement
-        cur_d = cur_d[sample(1:length(cur_d[,1]),replace = T),]
-      } else {
-        stop('unknown bootstrap type!')
-      }
-      # fit under alternative hypothesis
-      cur_fit <- eval(parse(text=mod_call))
-      return(fun_extract(cur_fit))
-    }
-
   ## running the bootstrap (no cov)
   cl<-parallel::makeCluster(num_cpus)
   registerDoSNOW(cl)
-  effects_under_ha <- foreach(ff=1:num, .packages='lme4',.verbose=T,.export = c("data_pdt","cur_control")) %dopar% {
-    agk.boot.cfint.mermod.subfun(mermod,mod_call,fun_extract,cur_control,type)
+  effects_under_ha <- foreach(ff=1:num, .packages=c('lme4','dplyr'),.verbose=T,.export = c("data_pdt","cur_control")) %dopar% {
+    agk.boot.cfint.mermod.subfun(mermod,mod_call,fun_extract,cur_control,cur_type,nonp_unit,nonp_batch_names)
   }
   return(effects_under_ha)
+  close(cl)
 }
+
+# sub function
+agk.boot.cfint.mermod.subfun = function(mermod,mod_call,fun_extract,cur_control,cur_type,nonp_unit,nonp_batch_names) {
+  cur_d = mermod@frame
+  if (cur_type == 'parametric') {
+    # simulate under alternative hyothesis
+    cur_d$accept_reject <- (simulate(mermod))[[1]]
+  } else if (cur_type == 'non-parametric') {
+    # resample the data with replacement
+    if (nonp_unit == 'single_observation') {
+      cur_d = cur_d[sample(1:length(cur_d[,1]),replace = T),]
+    } else if (nonp_unit == 'batch') {
+      # use a unit bootstrap, or clustered bootstrap
+      if (length(nonp_batch_names) == 2) {
+        # stratified bootstrapping and by unit
+        res = split.data.frame(cur_d,cur_d[nonp_batch_names[1]])
+        
+        for (kk in 1:length(res)) {
+          # get the current stratum
+          cur_res_d = res[[kk]]
+          # split it so it is a list of data frames by desired unit
+          cur_res_d = split.data.frame(cur_res_d,cur_res_d[nonp_batch_names[2]])
+          # resample it
+          cur_res_d = cur_res_d[sample(1:length(cur_res_d),replace = T)]
+          # reassemble it
+          cur_res_d = bind_rows(cur_res_d)
+          # pack it back
+          res[[kk]] = cur_res_d
+        }
+        cur_d = bind_rows(res)
+        
+      } else if (length(nonp_batch_names) == 1) {
+        # split it so it is a list of data frames by desired unit
+        cur_d = split.data.frame(cur_d,cur_d[nonp_batch_names[1]])
+        # resample it
+        cur_d = cur_d[sample(1:length(cur_d),replace = T)]
+        # reassemble it
+        cur_d = bind_rows(cur_d)
+        
+      } else {
+        stop('unsupported length of nonp_batch_names')
+      }
+    } else {
+      stop('unknown np_unit')
+    }
+    
+  } else {
+    stop('unknown bootstrap cur_type!')
+  }
+  # fit under alternative hypothesis
+  cur_fit <- eval(parse(text=mod_call))
+  return(fun_extract(cur_fit))
+}
+
 
 agk.boot.p.mermod = function(mermod,mermod0=NULL,num_cpus,num,fun_extract,cur_control,type,permvars=NULL) {
   # doing a parametric bootstrap of p-values against a 0-hypothesis mermod0
