@@ -914,28 +914,35 @@ agk.mri.shorter.and.grouped.names = function(ci_res) {
   grouping[grep('intercept of classifier',ci_res$coef)]     = 'Covariate_and_Intercept'
   
   ci_res$grouping = factor(grouping,levels = c('cue_reactivity','PIT','Amy_to_OFC','Amy_to_Striatum','Accumbens_to_Str_Amy','Covariate_and_Intercept'),
-                           labels = c('cue reactivity','PIT','PPI PIT seed Amygdala to OFC','PPI PIT seed Amygdala to Accumbens','PPI PIT seed Accumbens to Amygdala','Covariate and Intercept'))
+                           labels = c('cue reactivity','PIT','PPI PIT seed Amygdala to OFC','PPI PIT seed Amygdala to Accumbens','PPI PIT seed Accumbens to Amygdala','Covariate'))
   
   # shorter names even
-  ci_res$coef = gsub('Accumbens','Acc',ci_res$coef)
-  ci_res$coef = gsub('Amygdala','Amy',ci_res$coef)
+  #ci_res$coef = gsub('Accumbens','Acc',ci_res$coef)
+  #ci_res$coef = gsub('Amygdala','Amy',ci_res$coef)
   ci_res$coef = gsub('PPI','c',ci_res$coef)
   ci_res$coef = gsub('PITx','PIT',ci_res$coef)
   ci_res$coef = gsub('c_','c',ci_res$coef)
   ci_res$coef = gsub('StrAso','StrAs',ci_res$coef)
   ci_res$coef = gsub('StrAs','',ci_res$coef)
   ci_res$coef = gsub('ROI_','',ci_res$coef)
-  ci_res$coef = gsub('Picgam_','gam_',ci_res$coef)
-  ci_res$coef = gsub('Picneg_','neg_',ci_res$coef)
-  ci_res$coef = gsub('Picpos_','pos_',ci_res$coef)
-  ci_res$coef = gsub('^PITpos_','pos_',ci_res$coef)
-  ci_res$coef = gsub('^PITneg_','neg_',ci_res$coef)
-  ci_res$coef = gsub('^PITgam_','gam_',ci_res$coef)
-  ci_res$coef = gsub('^cAmy','Amy',ci_res$coef)
-  ci_res$coef = gsub('^cAcc','Acc',ci_res$coef)
-  ci_res$coef = gsub('^AccPITgam','Acc_PITgam',ci_res$coef)
-  ci_res$coef = gsub('^AccPITneg','Acc_PITneg',ci_res$coef)
-  ci_res$coef = gsub('^AccPITpos','Acc_PITpos',ci_res$coef)
+  ci_res$coef = gsub('Picgam_','gambling_',ci_res$coef)
+  ci_res$coef = gsub('Picneg_','negative_',ci_res$coef)
+  ci_res$coef = gsub('Picpos_','positive_',ci_res$coef)
+  ci_res$coef = gsub('^PITpos_','positive_',ci_res$coef)
+  ci_res$coef = gsub('^PITneg_','negative_',ci_res$coef)
+  ci_res$coef = gsub('^PITgam_','gambling_',ci_res$coef)
+  ci_res$coef = gsub('^cAmy','Amygdala',ci_res$coef)
+  ci_res$coef = gsub('^cAcc','Accumbens',ci_res$coef)
+  ci_res$coef = gsub('^AccPITgam','Accumbens_PITgambling',ci_res$coef)
+  ci_res$coef = gsub('^AccPITneg','Accumbens_PITnegative',ci_res$coef)
+  ci_res$coef = gsub('^AccPITpos','Accumbens_PITpositive',ci_res$coef)
+  ci_res$coef = gsub('edu_years','years_in_school',ci_res$coef)
+  ci_res$coef = gsub('^AccumbensPITpos_Amy','Accumbens_PITpos_Amygdala',ci_res$coef)
+  ci_res$coef = gsub('^AccumbensPITneg_Amy','Accumbens_PITneg_Amygdala',ci_res$coef)
+  ci_res$coef = gsub('^AccumbensPITgam_Amy','Accumbens_PITgam_Amygdala',ci_res$coef)
+  
+  # change the OrG to OFC
+  ci_res$coef = gsub('OrG','OFC',ci_res$coef)
   
   return(ci_res)
 }
@@ -4953,6 +4960,15 @@ agk.fmri.mean.plot <- function(fmri_con,group,nms_anly,ind) {
                         color="#FF3333", size =4.5)
   p <- p + ylab(names(cur_df)[1])
   return(p)
+}
+
+## PLOTTING ===================================================================
+agk.make.plot.text.bigger =  function(mRat) {
+  mRat  = mRat + theme(axis.text=element_text(size=15),
+                       axis.title=element_text(size=20,face="bold")) + theme(plot.title = element_text(size=22)) 
+  mRat  = mRat +  theme(legend.title = element_text(size=18)) +  theme(legend.text = element_text(size=15)) + 
+    theme(text = element_text(size=18),axis.text.x = element_text(face='bold', size =12)) 
+  return(mRat)
 }
 
 ##   COMPILING ================================================================
