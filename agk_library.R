@@ -940,6 +940,9 @@ agk.mri.shorter.and.grouped.names = function(ci_res) {
   ci_res$coef = gsub('^AccumbensPITpos_Amy','Accumbens_PITpos_Amygdala',ci_res$coef)
   ci_res$coef = gsub('^AccumbensPITneg_Amy','Accumbens_PITneg_Amygdala',ci_res$coef)
   ci_res$coef = gsub('^AccumbensPITgam_Amy','Accumbens_PITgam_Amygdala',ci_res$coef)
+  ci_res$coef = gsub('^Amygdala_PITpos_Acc','Amygdala_PITpos_Accumbens',ci_res$coef)
+  ci_res$coef = gsub('^Amygdala_PITneg_Acc','Amygdala_PITneg_Accumbens',ci_res$coef)
+  ci_res$coef = gsub('^Amygdala_PITgam_Acc','Amygdala_PITgam_Accumbens',ci_res$coef)
   
   # change the OrG to OFC
   ci_res$coef = gsub('OrG','OFC',ci_res$coef)
